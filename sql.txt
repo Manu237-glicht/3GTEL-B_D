@@ -1,0 +1,193 @@
+CREATE TABLE CLIENT(
+   Code_client INT AUTO_INCREMENT,
+   type_client VARCHAR(30)  NOT NULL,
+   nom_client VARCHAR(150)  NOT NULL,
+   niu_client VARCHAR(20) ,
+   telephone VARCHAR(20) ,
+   email VARCHAR(100) ,
+   archive BOOLEAN NOT NULL,
+   PRIMARY KEY(Code_client),
+   UNIQUE(niu_client)
+);
+
+CREATE TABLE FAMILLE(
+   code_famille VARCHAR(30) ,
+   libelle_famille VARCHAR(100)  NOT NULL,
+   PRIMARY KEY(code_famille),
+   UNIQUE(libelle_famille)
+);
+
+CREATE TABLE ADRESSE(
+   Id_adresse INT AUTO_INCREMENT,
+   nature_adresse VARCHAR(30)  NOT NULL,
+   rue VARCHAR(50) ,
+   quartier VARCHAR(50)  NOT NULL,
+   ville VARCHAR(50)  NOT NULL,
+   boite_postale VARCHAR(20) ,
+   Code_client INT NOT NULL,
+   PRIMARY KEY(Id_adresse),
+   FOREIGN KEY(Code_client) REFERENCES CLIENT(Code_client)
+);
+
+CREATE TABLE UTILISATEUR(
+   Id_utilisateur INT AUTO_INCREMENT,
+   login VARCHAR(50)  NOT NULL,
+   nom_utilisateur VARCHAR(150)  NOT NULL,
+   hash_mot_de_passe VARCHAR(255)  NOT NULL,
+   role VARCHAR(30)  NOT NULL,
+   actif BOOLEAN NOT NULL,
+   PRIMARY KEY(Id_utilisateur),
+   UNIQUE(login)
+);
+
+CREATE TABLE JOURNAL(
+   Id_journal INT AUTO_INCREMENT,
+   horotage DATETIME NOT NULL,
+   action VARCHAR(50)  NOT NULL,
+   table_cible VARCHAR(50)  NOT NULL,
+   id_cible VARCHAR(50)  NOT NULL,
+   detail VARCHAR(255) ,
+   Id_utilisateur INT NOT NULL,
+   PRIMARY KEY(Id_journal),
+   FOREIGN KEY(Id_utilisateur) REFERENCES UTILISATEUR(Id_utilisateur)
+);
+
+CREATE TABLE TAUX_TVA(
+   code_taux CHAR(15) ,
+   libelle_taux VARCHAR(50)  NOT NULL,
+   taux DECIMAL(5,2)   NOT NULL,
+   date_effet DATE NOT NULL,
+   PRIMARY KEY(code_taux),
+   UNIQUE(date_effet)
+);
+
+CREATE TABLE ENTREPRISE(
+   Id_entreprise INT,
+   raison_sociale VARCHAR(150)  NOT NULL,
+   adresse VARCHAR(150)  NOT NULL,
+   coordonnees VARCHAR(50)  NOT NULL,
+   email VARCHAR(150)  NOT NULL,
+   niu VARCHAR(30)  NOT NULL,
+   logo VARCHAR(250)  NOT NULL,
+   cahet VARCHAR(250)  NOT NULL,
+   signature VARCHAR(250)  NOT NULL,
+   Identifiants_fiscaux VARCHAR(150)  NOT NULL,
+   forme_jurique VARCHAR(20)  NOT NULL,
+   capital BIGINT NOT NULL,
+   activite VARCHAR(110)  NOT NULL,
+   conditions_generales VARCHAR(950)  NOT NULL,
+   banque VARCHAR(90)  NOT NULL,
+   rib VARCHAR(50)  NOT NULL,
+   Mobile_money VARCHAR(50)  NOT NULL,
+   PRIMARY KEY(Id_entreprise)
+);
+
+CREATE TABLE UNITE(
+   code_unite VARCHAR(30) ,
+   libelle_unite VARCHAR(5)  NOT NULL,
+   PRIMARY KEY(code_unite)
+);
+
+CREATE TABLE COMPTEUR(
+   type_document VARCHAR(30) ,
+   annee INT,
+   prefixe VARCHAR(15)  NOT NULL,
+   dernier_numero INT NOT NULL,
+   PRIMARY KEY(type_document, annee)
+);
+
+CREATE TABLE ARTICLE(
+   ref_article VARCHAR(30) ,
+   designation VARCHAR(150)  NOT NULL,
+   nature_article VARCHAR(30)  NOT NULL,
+   prix_catalogue_ht DECIMAL(14,0)   NOT NULL,
+   code_unite VARCHAR(30)  NOT NULL,
+   code_famille VARCHAR(30)  NOT NULL,
+   PRIMARY KEY(ref_article),
+   UNIQUE(designation),
+   FOREIGN KEY(code_unite) REFERENCES UNITE(code_unite),
+   FOREIGN KEY(code_famille) REFERENCES FAMILLE(code_famille)
+);
+
+CREATE TABLE DOCUMENT(
+   Id_document INT AUTO_INCREMENT,
+   numero VARCHAR(50)  NOT NULL,
+   type_document VARCHAR(30)  NOT NULL,
+   date_creation DATETIME NOT NULL,
+   date_emission DATETIME,
+   statut VARCHAR(20)  NOT NULL,
+   taux_remise DECIMAL(5,2)  ,
+   montant_remise DECIMAL(14,0)  ,
+   exonere BOOLEAN NOT NULL,
+   motif_exoneration VARCHAR(255) ,
+   code_taux CHAR(15)  NOT NULL,
+   Id_adresse INT,
+   Id_adresse_1 INT NOT NULL,
+   Code_client INT NOT NULL,
+   Id_utilisateur INT NOT NULL,
+   PRIMARY KEY(Id_document),
+   UNIQUE(numero),
+   FOREIGN KEY(code_taux) REFERENCES TAUX_TVA(code_taux),
+   FOREIGN KEY(Id_adresse) REFERENCES ADRESSE(Id_adresse),
+   FOREIGN KEY(Id_adresse_1) REFERENCES ADRESSE(Id_adresse),
+   FOREIGN KEY(Code_client) REFERENCES CLIENT(Code_client),
+   FOREIGN KEY(Id_utilisateur) REFERENCES UTILISATEUR(Id_utilisateur)
+);
+
+CREATE TABLE DEVIS(
+   Id_document INT,
+   duree_validite_jours SMALLINT NOT NULL,
+   PRIMARY KEY(Id_document),
+   FOREIGN KEY(Id_document) REFERENCES DOCUMENT(Id_document)
+);
+
+CREATE TABLE SECTION(
+   Id_document INT,
+   num_section SMALLINT,
+   titre_section VARCHAR(50) ,
+   PRIMARY KEY(Id_document, num_section),
+   FOREIGN KEY(Id_document) REFERENCES DOCUMENT(Id_document)
+);
+
+CREATE TABLE FACTURE(
+   Id_document_1 INT,
+   date_echeance DATE NOT NULL,
+   Id_document INT,
+   PRIMARY KEY(Id_document_1),
+   FOREIGN KEY(Id_document_1) REFERENCES DOCUMENT(Id_document),
+   FOREIGN KEY(Id_document) REFERENCES DEVIS(Id_document)
+);
+
+CREATE TABLE AVOIR(
+   Id_document_1 INT,
+   motif_avoir VARCHAR(255)  NOT NULL,
+   Id_document INT NOT NULL,
+   PRIMARY KEY(Id_document_1),
+   FOREIGN KEY(Id_document_1) REFERENCES DOCUMENT(Id_document),
+   FOREIGN KEY(Id_document) REFERENCES FACTURE(Id_document_1)
+);
+
+CREATE TABLE LIGNE(
+   Id_document INT,
+   num_section SMALLINT,
+   num_ligne SMALLINT,
+   libelle_ligne VARCHAR(255)  NOT NULL,
+   quantite DECIMAL(12,2)   NOT NULL,
+   nb_jours DECIMAL(12,2)  ,
+   nb_personnes DECIMAL(12,2)  ,
+   pu_applique_ht DECIMAL(14,0)   NOT NULL,
+   ref_article VARCHAR(30)  NOT NULL,
+   PRIMARY KEY(num_ligne, Id_document, num_section),
+   FOREIGN KEY(Id_document, num_section) REFERENCES SECTION(Id_document, num_section),
+   FOREIGN KEY(ref_article) REFERENCES ARTICLE(ref_article)
+);
+
+CREATE TABLE REGLEMENT(
+   num_reglement VARCHAR(30) ,
+   montant DECIMAL(14,0)   NOT NULL,
+   mode_paiement VARCHAR(30)  NOT NULL,
+   reference_paiement VARCHAR(50) ,
+   Id_document INT NOT NULL,
+   PRIMARY KEY(num_reglement),
+   FOREIGN KEY(Id_document) REFERENCES FACTURE(Id_document_1)
+);
